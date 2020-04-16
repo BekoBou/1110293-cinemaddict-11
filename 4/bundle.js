@@ -272,8 +272,8 @@ const createCommentTemplate = (comments) => {
 const filmDetailsTemplate = (card, detailRows) => {
   const {filmTitle, poster, filmDescription, filmRating, filmTtitleOriginal, ageRating, comment} = card;
   const filmDetails = createFilmDetailsTemplate(detailRows);
-  const filmControls = createFilmControlTemplate(_const_js__WEBPACK_IMPORTED_MODULE_0__["controlNames"]);
-  const emojis = createEmojiTemplate(_const_js__WEBPACK_IMPORTED_MODULE_0__["emojiNames"]);
+  const filmControls = createFilmControlTemplate(_const_js__WEBPACK_IMPORTED_MODULE_0__["CONTROL_NAMES"]);
+  const emojis = createEmojiTemplate(_const_js__WEBPACK_IMPORTED_MODULE_0__["EMOJI_NAMES"]);
   const filmComments = createCommentTemplate(comment);
 
   return (
@@ -396,21 +396,17 @@ const createFilterTemplate = (filters) => {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "headerProfileTemplate", function() { return headerProfileTemplate; });
+/* harmony import */ var _const_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../const.js */ "./src/const.js");
+
+
 const getRating = (profileInformation) => {
   let ratingProfile = profileInformation.rating;
-  if (ratingProfile <= 0) {
-    ratingProfile = ``;
-  } else if (ratingProfile > 0 && ratingProfile <= 10) {
-    ratingProfile = `novice`;
-  } else if (ratingProfile > 10 && ratingProfile <= 20) {
-    ratingProfile = `fan`;
-  } else if (ratingProfile > 20) {
-    ratingProfile = `movie buff`;
-  }
+  ratingProfile = ratingProfile >= 21 ? `movie buff` : _const_js__WEBPACK_IMPORTED_MODULE_0__["PROFILE_RATINGS"][Math.ceil(ratingProfile / 10)];
   return {
     rating: ratingProfile,
     avatar: `bitmap@2x.png`
   };
+
 };
 
 
@@ -452,14 +448,15 @@ const createSortingTemplate = () => {
 /*!**********************!*\
   !*** ./src/const.js ***!
   \**********************/
-/*! exports provided: controlNames, emojiNames */
+/*! exports provided: CONTROL_NAMES, EMOJI_NAMES, PROFILE_RATINGS */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "controlNames", function() { return controlNames; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "emojiNames", function() { return emojiNames; });
-const controlNames = [
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CONTROL_NAMES", function() { return CONTROL_NAMES; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "EMOJI_NAMES", function() { return EMOJI_NAMES; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "PROFILE_RATINGS", function() { return PROFILE_RATINGS; });
+const CONTROL_NAMES = [
   {
     name: `watchlist`,
     label: `Add to watchlist`
@@ -476,13 +473,18 @@ const controlNames = [
 ];
 
 
-const emojiNames = [
+const EMOJI_NAMES = [
   `smile`,
   `sleeping`,
   `puke`,
   `angry`
 ];
 
+const PROFILE_RATINGS = [
+  ``,
+  `novice`,
+  `fan`,
+];
 
 
 
@@ -532,24 +534,30 @@ const SHOWING_FILM_COUNT_ON_START = 5;
 const SHOWING_FILM_COUNT_BY_BUTTON = 5;
 
 
-const render = (container, template, place) => {
-  container.insertAdjacentHTML(place, template);
+const render = (container, template, place = `beforeend`, count = 1, cards) => {
+  if (!cards) {
+    container.insertAdjacentHTML(place, template);
+  } else {
+    for (let i = 0; i < count; i++) {
+      container.insertAdjacentHTML(place, template(cards[i]));
+    }
+  }
 };
 
 
 const filters = Object(_mock_filter__WEBPACK_IMPORTED_MODULE_7__["generateFilters"])();
 const filmCards = Object(_mock_card_js__WEBPACK_IMPORTED_MODULE_8__["generateCards"])(FILM_CARD_COUNT);
-const filmTopCards = Object(_mock_card_js__WEBPACK_IMPORTED_MODULE_8__["generateCards"])(FILM_TOP_COUNT);
-const filmMostCommentedCards = Object(_mock_card_js__WEBPACK_IMPORTED_MODULE_8__["generateCards"])(FILM_MOST_COMMENTED_COUNT);
+const filmTopCards = filmCards.slice().sort((prev, next) => next.filmRating - prev.filmRating);
+const filmMostCommentedCards = filmCards.slice().sort((prev, next) => next.comment.length - prev.comment.length);
 const filmDetailRows = Object(_mock_film_details_js__WEBPACK_IMPORTED_MODULE_11__["createfilmDetailRows"])(filmCards[0]);
 const detailRows = Object(_mock_film_details_js__WEBPACK_IMPORTED_MODULE_11__["generateDetailRows"])(filmDetailRows);
 
 const siteHeaderElement = document.querySelector(`.header`);
 const mainContainer = document.querySelector(`.main`);
-render(siteHeaderElement, Object(_components_profile_js__WEBPACK_IMPORTED_MODULE_5__["headerProfileTemplate"])(_mock_profile_rating_js__WEBPACK_IMPORTED_MODULE_9__["profileInformations"]), `beforeend`);
-render(mainContainer, Object(_components_navigation_js__WEBPACK_IMPORTED_MODULE_4__["createFilterTemplate"])(filters), `beforeend`);
-render(mainContainer, Object(_components_sorting__WEBPACK_IMPORTED_MODULE_6__["createSortingTemplate"])(), `beforeend`);
-render(mainContainer, Object(_components_container_js__WEBPACK_IMPORTED_MODULE_3__["filmsContainerTemplate"])(), `beforeend`);
+render(siteHeaderElement, Object(_components_profile_js__WEBPACK_IMPORTED_MODULE_5__["headerProfileTemplate"])(_mock_profile_rating_js__WEBPACK_IMPORTED_MODULE_9__["profileInformations"]));
+render(mainContainer, Object(_components_navigation_js__WEBPACK_IMPORTED_MODULE_4__["createFilterTemplate"])(filters));
+render(mainContainer, Object(_components_sorting__WEBPACK_IMPORTED_MODULE_6__["createSortingTemplate"])());
+render(mainContainer, Object(_components_container_js__WEBPACK_IMPORTED_MODULE_3__["filmsContainerTemplate"])());
 
 
 const filmsContainer = mainContainer.querySelector(`.films`);
@@ -558,41 +566,35 @@ const filmCardElement = filmsContainer.children[0].querySelector(`.films-list__c
 const buttonShowMore = mainContainer.querySelector(`.films-list`);
 const filmsCardTop = filmsContainer.children[1].querySelector(`.films-list__container`);
 const filmsCardMost = filmsContainer.children[2].querySelector(`.films-list__container`);
+
 const bodyContainer = document.querySelector(`body`);
+render(buttonShowMore, Object(_components_button_show_more_js__WEBPACK_IMPORTED_MODULE_2__["buttonShowMoreTemplate"])());
+render(filmsStaisticContainer, Object(_components_footer_statistic_js__WEBPACK_IMPORTED_MODULE_10__["createFilmStaisticTemplate"])(filmCards));
 
 
 let showingFilmCount = SHOWING_FILM_COUNT_ON_START;
 
-render(buttonShowMore, Object(_components_button_show_more_js__WEBPACK_IMPORTED_MODULE_2__["buttonShowMoreTemplate"])(), `beforeend`);
-render(filmsStaisticContainer, Object(_components_footer_statistic_js__WEBPACK_IMPORTED_MODULE_10__["createFilmStaisticTemplate"])(filmCards), `beforeend`);
+const startCards = filmCards.slice(0, showingFilmCount);
+render(filmCardElement, _components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"], `beforeend`, startCards.length, startCards);
 
-filmCards.slice(0, showingFilmCount)
-  .forEach((task) => render(filmCardElement, Object(_components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"])(task), `beforeend`));
+render(filmsCardTop, _components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"], `beforeend`, FILM_TOP_COUNT, filmTopCards);
 
-for (let i = 0; i < filmTopCards.length; i++) {
-  render(filmsCardTop, Object(_components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"])(filmCards[i]), `beforeend`);
-}
-
-for (let i = 0; i < filmMostCommentedCards.length; i++) {
-  render(filmsCardMost, Object(_components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"])(filmMostCommentedCards[i]), `beforeend`);
-}
-
+render(filmsCardMost, _components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"], `beforeend`, FILM_MOST_COMMENTED_COUNT, filmMostCommentedCards);
 
 const loadMoreButton = buttonShowMore.querySelector(`.films-list__show-more`);
 
 loadMoreButton.addEventListener(`click`, () => {
   const prevTasksCount = showingFilmCount;
   showingFilmCount = showingFilmCount + SHOWING_FILM_COUNT_BY_BUTTON;
-
-  filmCards.slice(prevTasksCount, showingFilmCount)
-  .forEach((task) => render(filmCardElement, Object(_components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"])(task), `beforeend`));
+  let byButtonCards = filmCards.slice(prevTasksCount, showingFilmCount);
+  render(filmCardElement, _components_film_card_js__WEBPACK_IMPORTED_MODULE_0__["filmCardTemplate"], `beforeend`, byButtonCards.length, byButtonCards);
 
   if (showingFilmCount >= filmCards.length) {
     loadMoreButton.remove();
   }
 });
 
-render(bodyContainer, Object(_components_film_details_js__WEBPACK_IMPORTED_MODULE_1__["filmDetailsTemplate"])(filmCards[0], detailRows), `beforeend`);
+render(bodyContainer, Object(_components_film_details_js__WEBPACK_IMPORTED_MODULE_1__["filmDetailsTemplate"])(filmCards[0], detailRows));
 
 
 /***/ }),
@@ -689,11 +691,12 @@ const generateCard = () => {
     filmTitle: getRandomArrayItem(filmTitles),
     poster: filmPosters[getRandomIntegerNumber(1, 5)],
     comment: generateComments(getRandomIntegerNumber(1, 10)),
-    filmRating: getRandomIntegerNumber(3, 9),
+    filmRating: getRandomIntegerNumber(1, 10),
     filmTtitleOriginal: getRandomArrayItem(filmTtitleOriginals),
     ageRating: getRandomArrayItem(ageRatings),
   };
 };
+
 
 const generateCards = (count) => {
   return new Array(count)
